@@ -88,6 +88,12 @@ export default function App() {
 
   const step = STEPS.find((s) => s.id === active)
   const openSettings = () => setShowSettings(true)
+  const addBrandRules = (rules) =>
+    setSettings((s) => {
+      const existing = s.brandRules || []
+      const lower = new Set(existing.map((r) => r.toLowerCase()))
+      return { ...s, brandRules: [...existing, ...rules.filter((r) => !lower.has(r.toLowerCase()))] }
+    })
 
   return (
     <div className="app">
@@ -164,6 +170,7 @@ export default function App() {
               brief={brief}
               copy={currentCopy}
               onCopyChange={setCopy}
+              onAddBrandRules={addBrandRules}
               onOpenSettings={openSettings}
               onGoClips={() => setActive('clips')}
               onNext={() => setActive('brand')}

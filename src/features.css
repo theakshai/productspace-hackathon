@@ -1,0 +1,8 @@
+/* Styles for features added after F5. */
+.voice-edit { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 10px; display: grid; gap: 2px; }
+.small-box { font-size: 14px; padding: 10px 12px; }
+.check { gap: 6px; cursor: pointer; }
+.voice-edit .btn { margin-top: 0; }
+.rule-suggest { margin-top: 8px; }
+.rule-suggest li { padding: 4px 0; gap: 12px; }
+.rule-suggest .btn { padding: 4px 10px; }
