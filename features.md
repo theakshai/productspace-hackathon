@@ -39,7 +39,7 @@ Each feature is built, tested and committed before the next one starts.
 | F9 | Performance feedback loop | Enter views, likes, comments and saves per posted clip; the app learns what performed (topic, length, hook type, platform) and uses it to rank future clip suggestions, with a visible "what changed and why" | ✅ |
 | F10 | Demo mode | One click loads a pre-processed podcast plus sample performance data, so the demo never waits on processing | ✅ |
 | F11 | Settings | Gemini API key, default platforms, posting cadence | ✅ |
-| F12 | Stretch: clip export | Download an actual cut clip (ffmpeg in the browser) | ⬜ skipped (subtitles .srt + timestamped YouTube links instead) |
+| F12 | Clip export | Download each clip as its own video file, cut in the browser (uploaded files). YouTube sources open the clip at its timestamp | ✅ |
 
 ## Requirement coverage (Problem Statement 01)
 
