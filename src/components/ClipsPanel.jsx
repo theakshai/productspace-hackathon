@@ -1,12 +1,45 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { platformLabel, structureBrief } from '../lib/brief.js'
 import { DEFAULT_BRIEF, clipDuration, selectClips } from '../lib/clips.js'
+import { canCut, cutClip, downloadBlob } from '../lib/cut.js'
+import { safeFilename } from '../lib/srt.js'
 import { formatTimestamp } from '../lib/transcript.js'
 import DictationBox from './DictationBox.jsx'
 import MediaPlayer from './MediaPlayer.jsx'
 
 const EXAMPLE =
   "Uh, find me the bits about AI and jobs, like what young people should actually learn, for, um, college students. Let's do LinkedIn, no wait, Instagram and YouTube Shorts. Five clips, keep them under a minute, and skip the personal stuff."
+
+// F12: export the actual clip. Uploaded files are cut in the browser; YouTube clips open at the moment.
+function ExportClip({ media, clip, index }) {
+  const [progress, setProgress] = useState(null)
+  const [error, setError] = useState(null)
+  if (media?.kind === 'youtube') {
+    return (
+      <a className="btn small" href={`https://www.youtube.com/watch?v=${media.youtubeId}&t=${Math.floor(clip.start)}s`} target="_blank" rel="noreferrer" title="YouTube videos can't be cut in the browser. Upload the file to export clips.">
+        ↗ Open at {formatTimestamp(clip.start)}
+      </a>
+    )
+  }
+  if (!canCut()) return null
+  async function run() {
+    setError(null)
+    setProgress(0)
+    try {
+      const { blob, ext } = await cutClip({ src: media.previewUrl, isVideo: media.kind === 'video', start: clip.start, end: clip.end, onProgress: setProgress })
+      downloadBlob(`${String(index + 1).padStart(2, '0')}-${safeFilename(clip.title)}.${ext}`, blob)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setProgress(null)
+    }
+  }
+  return (
+    <button className="btn small" onClick={run} disabled={!media?.previewUrl || progress !== null} title={media?.previewUrl ? 'Cut this clip into its own file' : 'Re-select the file on the Upload step to export clips'}>
+      {progress !== null ? `Cutting… ${Math.round(progress * 100)}%` : error ? '⚠ Retry export' : '⬇ Export clip'}
+    </button>
+  )
+}
 
 function BriefSummary({ brief }) {
   return (
@@ -220,6 +253,7 @@ export default function ClipsPanel({
                     <button className="btn small" onClick={() => play(clip)}>
                       {playing === clip.id ? '■ Playing…' : '▶ Play clip'}
                     </button>
+                    <ExportClip media={media} clip={clip} index={i} />
                     <button className="btn small" onClick={() => toggleKeep(clip.id)} aria-pressed={clip.keep}>
                       {clip.keep ? '✓ Keep' : 'Dropped'}
                     </button>
