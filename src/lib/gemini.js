@@ -85,9 +85,29 @@ export async function fetchYouTubeTitle(id) {
   }
 }
 
+// Tracks every Gemini request in flight, so the app can show one "Gemini is working" indicator.
+let pending = 0
+const listeners = new Set()
+export function onGeminiActivity(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+async function tracked(promise) {
+  pending++
+  listeners.forEach((f) => f(pending))
+  try {
+    return await promise
+  } finally {
+    pending--
+    listeners.forEach((f) => f(pending))
+  }
+}
+export const generateJSON = (opts) => tracked(generateJSONRaw(opts))
+export const uploadFile = (...args) => tracked(uploadFileRaw(...args))
+
 // Calls generateContent and returns parsed JSON that matches `schema`.
 // `parts` is an array of Gemini content parts, e.g. [{ text }] or [{ file_data }, { text }].
-export async function generateJSON({ apiKey, model, system, parts, schema, temperature = 0.4, signal, config = {} }) {
+async function generateJSONRaw({ apiKey, model, system, parts, schema, temperature = 0.4, signal, config = {} }) {
   const res = await fetch(`${API_ROOT}/v1beta/models/${model || DEFAULT_MODEL}:generateContent`, {
     method: 'POST',
     signal,
@@ -123,7 +143,7 @@ export async function generateJSON({ apiKey, model, system, parts, schema, tempe
 
 // Resumable upload to the Gemini Files API with progress callbacks.
 // onProgress({ stage: 'uploading' | 'processing' | 'ready', percent })
-export async function uploadFile(apiKey, file, onProgress, signal) {
+async function uploadFileRaw(apiKey, file, onProgress, signal) {
   const mimeType = file.type || 'application/octet-stream'
 
   // 1. Start a resumable upload session.
