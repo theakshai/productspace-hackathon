@@ -87,7 +87,7 @@ export async function fetchYouTubeTitle(id) {
 
 // Calls generateContent and returns parsed JSON that matches `schema`.
 // `parts` is an array of Gemini content parts, e.g. [{ text }] or [{ file_data }, { text }].
-export async function generateJSON({ apiKey, model, system, parts, schema, temperature = 0.4, signal }) {
+export async function generateJSON({ apiKey, model, system, parts, schema, temperature = 0.4, signal, config = {} }) {
   const res = await fetch(`${API_ROOT}/v1beta/models/${model || DEFAULT_MODEL}:generateContent`, {
     method: 'POST',
     signal,
@@ -99,6 +99,7 @@ export async function generateJSON({ apiKey, model, system, parts, schema, tempe
         temperature,
         responseMimeType: 'application/json',
         responseSchema: schema,
+        ...config,
       },
     }),
   })
@@ -113,6 +114,9 @@ export async function generateJSON({ apiKey, model, system, parts, schema, tempe
   try {
     return JSON.parse(text)
   } catch {
+    if (candidate?.finishReason === 'MAX_TOKENS') {
+      throw new Error('The answer was too long and got cut off. Try a shorter podcast (under 25 minutes).')
+    }
     throw new Error('Gemini returned something that was not valid JSON. Try again.')
   }
 }
