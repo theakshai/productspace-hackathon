@@ -8,6 +8,7 @@ import Settings from './components/Settings.jsx'
 import TranscriptPanel from './components/TranscriptPanel.jsx'
 import UploadPanel from './components/UploadPanel.jsx'
 import { DEMO_BRAND_RULES, buildDemo } from './lib/demo.js'
+import { onGeminiActivity } from './lib/gemini.js'
 import { load, save } from './lib/storage.js'
 
 // Each step maps to a feature in features.md. Steps unlock as features ship.
@@ -61,6 +62,8 @@ export default function App() {
   const [schedule, setSchedule] = useState(() => load('schedule', null))
   const [performance, setPerformance] = useState(() => load('performance', null))
   const [showSettings, setShowSettings] = useState(false)
+  const [geminiBusy, setGeminiBusy] = useState(0)
+  useEffect(() => onGeminiActivity(setGeminiBusy), [])
 
   useEffect(() => save('settings', settings), [settings])
   useEffect(() => save('media', persistableMedia(media)), [media])
@@ -135,12 +138,18 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
+        {geminiBusy > 0 && <div className="global-progress" role="progressbar" aria-label="Gemini is working" />}
+        <button className="brand" onClick={() => setActive('upload')} title="Back to start">
           <span className="logo" aria-hidden="true">✂</span>
           <span className="name">ClipCraft</span>
           <span className="tagline">One podcast in. A week of content out.</span>
-        </div>
+        </button>
         <div className="row">
+          {geminiBusy > 0 && (
+            <span className="gemini-working" role="status">
+              <span className="spinner" aria-hidden="true" /> Gemini is working…
+            </span>
+          )}
           <span className="voice-pill" title="All input in ClipCraft is designed for Wispr Flow dictation">
             🎙 Built for Wispr Flow
           </span>
@@ -172,7 +181,14 @@ export default function App() {
             <UploadPanel
               settings={settings}
               media={media}
-              onMediaChange={setMedia}
+              onMediaChange={(m) => {
+                // A different podcast starts with an empty voice brief.
+                if ((m?.gemini?.uri || null) !== (media?.gemini?.uri || null) && m?.fileName !== media?.fileName) {
+                  setSpeech('')
+                  setBrief(null)
+                }
+                setMedia(m)
+              }}
               onOpenSettings={openSettings}
               onNext={() => setActive('transcript')}
             />
