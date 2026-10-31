@@ -37,6 +37,38 @@ export function pickDefaultModel(models) {
   return flash[0] || models[0] || DEFAULT_MODEL
 }
 
+// Calls generateContent and returns parsed JSON that matches `schema`.
+// `parts` is an array of Gemini content parts, e.g. [{ text }] or [{ file_data }, { text }].
+export async function generateJSON({ apiKey, model, system, parts, schema, temperature = 0.4, signal }) {
+  const res = await fetch(`${API_ROOT}/v1beta/models/${model || DEFAULT_MODEL}:generateContent`, {
+    method: 'POST',
+    signal,
+    headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
+      contents: [{ role: 'user', parts }],
+      generationConfig: {
+        temperature,
+        responseMimeType: 'application/json',
+        responseSchema: schema,
+      },
+    }),
+  })
+  if (!res.ok) throw await apiError(res)
+  const data = await res.json()
+  const candidate = data.candidates?.[0]
+  const text = (candidate?.content?.parts || []).map((p) => p.text || '').join('')
+  if (!text) {
+    const reason = candidate?.finishReason || data.promptFeedback?.blockReason || 'empty response'
+    throw new Error(`Gemini returned no content (${reason})`)
+  }
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error('Gemini returned something that was not valid JSON. Try again.')
+  }
+}
+
 // Resumable upload to the Gemini Files API with progress callbacks.
 // onProgress({ stage: 'uploading' | 'processing' | 'ready', percent })
 export async function uploadFile(apiKey, file, onProgress, signal) {
