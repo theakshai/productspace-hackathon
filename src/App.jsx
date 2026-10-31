@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Settings from './components/Settings.jsx'
+import BriefPanel from './components/BriefPanel.jsx'
 import UploadPanel from './components/UploadPanel.jsx'
 import { load, save } from './lib/storage.js'
 
@@ -47,10 +48,16 @@ export default function App() {
   const [active, setActive] = useState('upload')
   const [settings, setSettings] = useState(() => load('settings', { apiKey: '', model: '' }))
   const [media, setMedia] = useState(restoreMedia)
+  const [speech, setSpeech] = useState(() => load('speech', ''))
+  const [brief, setBrief] = useState(() => load('brief', null))
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => save('settings', settings), [settings])
   useEffect(() => save('media', persistableMedia(media)), [media])
+  useEffect(() => save('speech', speech), [speech])
+  useEffect(() => save('brief', brief), [brief])
+
+  const done = { upload: Boolean(media?.gemini), brief: Boolean(brief) }
 
   const step = STEPS.find((s) => s.id === active)
 
@@ -80,7 +87,7 @@ export default function App() {
               className={`step ${s.id === active ? 'active' : ''}`}
               onClick={() => setActive(s.id)}
             >
-              <span className="step-num">{s.id === 'upload' && media?.gemini ? '✓' : i + 1}</span>
+              <span className="step-num">{done[s.id] ? '✓' : i + 1}</span>
               <span className="step-label">{s.label}</span>
             </button>
           ))}
@@ -94,6 +101,16 @@ export default function App() {
               onMediaChange={setMedia}
               onOpenSettings={() => setShowSettings(true)}
               onNext={() => setActive('brief')}
+            />
+          ) : active === 'brief' ? (
+            <BriefPanel
+              settings={settings}
+              speech={speech}
+              onSpeechChange={setSpeech}
+              brief={brief}
+              onBriefChange={setBrief}
+              onOpenSettings={() => setShowSettings(true)}
+              onNext={() => setActive('transcript')}
             />
           ) : (
             <Placeholder step={step} />
