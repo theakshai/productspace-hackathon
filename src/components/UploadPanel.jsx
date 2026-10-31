@@ -92,6 +92,11 @@ export default function UploadPanel({ settings, media, onMediaChange, onOpenSett
       setError('Please choose a video or audio file.')
       return
     }
+    // Same file chosen again (e.g. after a reload): restore the preview, keep the Gemini upload and all results.
+    if (media?.source === 'file' && media.gemini && media.fileName === file.name && media.size === file.size) {
+      onMediaChange({ ...media, file, previewUrl: URL.createObjectURL(file) })
+      return
+    }
     abortRef.current?.abort()
     setError(null)
     setProgress(null)
@@ -229,7 +234,10 @@ export default function UploadPanel({ settings, media, onMediaChange, onOpenSett
           )
         ) : (
           <div className="player placeholder-player">
-            <p className="muted">Preview isn't kept after a page reload. Choose the file again to watch it.</p>
+            <p className="muted">Preview isn't kept after a page reload. Choose the same file again to watch it and export clips. Your transcript and clips stay.</p>
+            <button className="btn small" onClick={() => inputRef.current?.click()}>
+              Choose the same file
+            </button>
           </div>
         )}
       </div>
