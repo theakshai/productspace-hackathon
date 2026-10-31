@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Settings from './components/Settings.jsx'
+import UploadPanel from './components/UploadPanel.jsx'
+import { load, save } from './lib/storage.js'
 
 // Each step maps to a feature in features.md. Steps unlock as features ship.
 const STEPS = [
@@ -12,20 +15,6 @@ const STEPS = [
   { id: 'performance', label: 'Performance', feature: 'F9', blurb: 'What worked, and how suggestions changed.' },
 ]
 
-function UploadPanel() {
-  return (
-    <div className="dropzone">
-      <div className="dropzone-icon" aria-hidden="true">▲</div>
-      <h2>Upload a podcast</h2>
-      <p className="muted">MP4, MOV, MP3, M4A or WAV · 10–20 minutes works best</p>
-      <button className="btn primary" disabled title="Arrives in F1">
-        Choose file
-      </button>
-      <p className="hint">Upload arrives in F1.</p>
-    </div>
-  )
-}
-
 function Placeholder({ step }) {
   return (
     <div className="placeholder">
@@ -37,8 +26,32 @@ function Placeholder({ step }) {
   )
 }
 
+// The File object and its preview URL only live in memory; everything else is saved.
+function persistableMedia(media) {
+  if (!media) return null
+  const { file: _file, previewUrl: _url, ...rest } = media
+  return rest
+}
+
+function restoreMedia() {
+  const saved = load('media', null)
+  if (!saved) return null
+  // Gemini deletes uploaded files after 48 hours.
+  if (saved.gemini?.expiresAt && new Date(saved.gemini.expiresAt) < new Date()) {
+    return { ...saved, gemini: null }
+  }
+  return saved
+}
+
 export default function App() {
   const [active, setActive] = useState('upload')
+  const [settings, setSettings] = useState(() => load('settings', { apiKey: '', model: '' }))
+  const [media, setMedia] = useState(restoreMedia)
+  const [showSettings, setShowSettings] = useState(false)
+
+  useEffect(() => save('settings', settings), [settings])
+  useEffect(() => save('media', persistableMedia(media)), [media])
+
   const step = STEPS.find((s) => s.id === active)
 
   return (
@@ -49,9 +62,14 @@ export default function App() {
           <span className="name">ClipCraft</span>
           <span className="tagline">One podcast in. A week of content out.</span>
         </div>
-        <span className="voice-pill" title="All input in ClipCraft is designed for Wispr Flow dictation">
-          🎙 Built for Wispr Flow
-        </span>
+        <div className="row">
+          <span className="voice-pill" title="All input in ClipCraft is designed for Wispr Flow dictation">
+            🎙 Built for Wispr Flow
+          </span>
+          <button className="btn small" onClick={() => setShowSettings(true)}>
+            ⚙ Settings{settings.apiKey ? '' : ' · add key'}
+          </button>
+        </div>
       </header>
 
       <div className="layout">
@@ -62,14 +80,30 @@ export default function App() {
               className={`step ${s.id === active ? 'active' : ''}`}
               onClick={() => setActive(s.id)}
             >
-              <span className="step-num">{i + 1}</span>
+              <span className="step-num">{s.id === 'upload' && media?.gemini ? '✓' : i + 1}</span>
               <span className="step-label">{s.label}</span>
             </button>
           ))}
         </nav>
 
-        <main className="panel">{active === 'upload' ? <UploadPanel /> : <Placeholder step={step} />}</main>
+        <main className="panel">
+          {active === 'upload' ? (
+            <UploadPanel
+              settings={settings}
+              media={media}
+              onMediaChange={setMedia}
+              onOpenSettings={() => setShowSettings(true)}
+              onNext={() => setActive('brief')}
+            />
+          ) : (
+            <Placeholder step={step} />
+          )}
+        </main>
       </div>
+
+      {showSettings && (
+        <Settings settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />
+      )}
     </div>
   )
 }

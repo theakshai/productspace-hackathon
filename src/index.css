@@ -76,3 +76,40 @@ p { margin: 0 0 8px; }
 }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.small { font-size: 13px; }
+.btn.small { padding: 6px 12px; font-size: 13px; margin-top: 0; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row.end { justify-content: flex-end; margin-top: 16px; }
+.link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
+
+.status { font-size: 14px; margin-top: 10px; }
+.status.ok { color: #4ade80; }
+.status.warn { color: #fbbf24; }
+.status.error { color: #f87171; }
+.status.busy { color: var(--muted); }
+
+.dropzone.dragging { border-color: var(--accent); background: var(--accent-soft); }
+
+.upload { display: grid; gap: 18px; }
+.player-wrap { background: #000; border-radius: 12px; overflow: hidden; }
+.player { width: 100%; max-height: 420px; display: block; background: #000; }
+.player.audio { padding: 32px 16px; background: var(--surface-2); }
+.placeholder-player { height: 200px; display: grid; place-items: center; text-align: center; padding: 16px; background: var(--surface-2); }
+.file-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.file-name { word-break: break-all; }
+.send-box { border-top: 1px solid var(--border); padding-top: 16px; }
+.progress-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+.progress { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; position: relative; }
+.progress-bar { height: 100%; background: var(--accent); transition: width 0.2s ease; }
+.progress.indeterminate .progress-bar { width: 35% !important; position: absolute; animation: slide 1.2s ease-in-out infinite; }
+@keyframes slide { 0% { left: -35%; } 100% { left: 100%; } }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: grid; place-items: center; padding: 16px; z-index: 10; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: min(480px, 100%); }
+.field { display: grid; gap: 6px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+.field input, .field select, .field textarea {
+  font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
