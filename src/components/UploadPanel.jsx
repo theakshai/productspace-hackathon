@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { fetchYouTubeTitle, parseYouTubeId, uploadFile } from '../lib/gemini.js'
 
 const ACCEPT = 'video/*,audio/*'
@@ -85,14 +85,6 @@ export default function UploadPanel({ settings, media, onMediaChange, onOpenSett
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
   const abortRef = useRef(null)
-
-  // Release the preview URL when the file changes or the panel unmounts.
-  useEffect(() => {
-    const url = media?.previewUrl
-    return () => {
-      if (url) URL.revokeObjectURL(url)
-    }
-  }, [media?.previewUrl])
 
   function pick(file) {
     if (!file) return
