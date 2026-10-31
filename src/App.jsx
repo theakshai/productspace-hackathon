@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Settings from './components/Settings.jsx'
 import BriefPanel from './components/BriefPanel.jsx'
+import TranscriptPanel from './components/TranscriptPanel.jsx'
 import UploadPanel from './components/UploadPanel.jsx'
 import { load, save } from './lib/storage.js'
 
@@ -50,14 +51,29 @@ export default function App() {
   const [media, setMedia] = useState(restoreMedia)
   const [speech, setSpeech] = useState(() => load('speech', ''))
   const [brief, setBrief] = useState(() => load('brief', null))
+  const [transcript, setTranscript] = useState(() => load('transcript', null))
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => save('settings', settings), [settings])
   useEffect(() => save('media', persistableMedia(media)), [media])
   useEffect(() => save('speech', speech), [speech])
   useEffect(() => save('brief', brief), [brief])
+  useEffect(() => save('transcript', transcript), [transcript])
 
-  const done = { upload: Boolean(media?.gemini), brief: Boolean(brief) }
+  // Release a local file's preview URL once it is replaced. Lives here (not in a panel)
+  // so the preview keeps working while you move between steps.
+  useEffect(() => {
+    const url = media?.previewUrl
+    return () => {
+      if (url) URL.revokeObjectURL(url)
+    }
+  }, [media?.previewUrl])
+
+  // A transcript belongs to one podcast: drop it when the podcast changes.
+  const mediaUri = media?.gemini?.uri || null
+  const currentTranscript = transcript && transcript.mediaUri === mediaUri ? transcript : null
+
+  const done = { upload: Boolean(media?.gemini), brief: Boolean(brief), transcript: Boolean(currentTranscript) }
 
   const step = STEPS.find((s) => s.id === active)
 
@@ -111,6 +127,16 @@ export default function App() {
               onBriefChange={setBrief}
               onOpenSettings={() => setShowSettings(true)}
               onNext={() => setActive('transcript')}
+            />
+          ) : active === 'transcript' ? (
+            <TranscriptPanel
+              settings={settings}
+              media={media}
+              transcript={currentTranscript}
+              onTranscriptChange={setTranscript}
+              onOpenSettings={() => setShowSettings(true)}
+              onGoUpload={() => setActive('upload')}
+              onNext={() => setActive('clips')}
             />
           ) : (
             <Placeholder step={step} />
