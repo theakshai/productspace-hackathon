@@ -7,9 +7,6 @@ import { formatTimestamp } from '../lib/transcript.js'
 import DictationBox from './DictationBox.jsx'
 import MediaPlayer from './MediaPlayer.jsx'
 
-const EXAMPLE =
-  "Uh, find me the bits about AI and jobs, like what young people should actually learn, for, um, college students. Let's do LinkedIn, no wait, Instagram and YouTube Shorts. Five clips, keep them under a minute, and skip the personal stuff."
-
 // F12: export the actual clip. Uploaded files are cut in the browser; YouTube clips open at the moment.
 function ExportClip({ media, clip, index }) {
   const [progress, setProgress] = useState(null)
@@ -196,9 +193,7 @@ export default function ClipsPanel({
           data-testid="clip-speech"
         />
         <div className="row between">
-          <button className="link" onClick={() => onSpeechChange(EXAMPLE)} disabled={busy}>
-            Use an example
-          </button>
+          <span />
           <button className="btn primary" onClick={run} disabled={busy}>
             {stage === 'brief' ? 'Understanding you…' : stage === 'clips' ? 'Picking clips…' : clips ? 'Find clips again' : 'Find clips'}
           </button>
@@ -254,8 +249,8 @@ export default function ClipsPanel({
                       {playing === clip.id ? '■ Playing…' : '▶ Play clip'}
                     </button>
                     <ExportClip media={media} clip={clip} index={i} />
-                    <button className="btn small" onClick={() => toggleKeep(clip.id)} aria-pressed={clip.keep}>
-                      {clip.keep ? '✓ Keep' : 'Dropped'}
+                    <button className="btn small" onClick={() => toggleKeep(clip.id)} aria-pressed={!clip.keep}>
+                      {clip.keep ? 'Drop' : '↺ Restore'}
                     </button>
                   </div>
                 </div>
