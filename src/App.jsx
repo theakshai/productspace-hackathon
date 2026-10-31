@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import ClipsPanel from './components/ClipsPanel.jsx'
+import CopyPanel from './components/CopyPanel.jsx'
 import Settings from './components/Settings.jsx'
 import TranscriptPanel from './components/TranscriptPanel.jsx'
 import UploadPanel from './components/UploadPanel.jsx'
@@ -52,6 +53,7 @@ export default function App() {
   const [brief, setBrief] = useState(() => load('brief', null))
   const [transcript, setTranscript] = useState(() => load('transcript', null))
   const [clips, setClips] = useState(() => load('clips', null))
+  const [copy, setCopy] = useState(() => load('copy', null))
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => save('settings', settings), [settings])
@@ -60,6 +62,7 @@ export default function App() {
   useEffect(() => save('brief', brief), [brief])
   useEffect(() => save('transcript', transcript), [transcript])
   useEffect(() => save('clips', clips), [clips])
+  useEffect(() => save('copy', copy), [copy])
 
   // Release a local file's preview URL once it is replaced. Lives here (not in a panel)
   // so the preview keeps working while you move between steps.
@@ -74,11 +77,13 @@ export default function App() {
   const mediaUri = media?.gemini?.uri || null
   const currentTranscript = transcript && transcript.mediaUri === mediaUri ? transcript : null
   const currentClips = clips && clips.mediaUri === mediaUri && currentTranscript ? clips : null
+  const currentCopy = copy && copy.mediaUri === mediaUri && currentClips ? copy : null
 
   const done = {
     upload: Boolean(media?.gemini),
     transcript: Boolean(currentTranscript),
     clips: Boolean(currentClips?.items.some((c) => c.keep)),
+    copy: Boolean(currentCopy),
   }
 
   const step = STEPS.find((s) => s.id === active)
@@ -149,6 +154,19 @@ export default function App() {
               onOpenSettings={openSettings}
               onGoTranscript={() => setActive('transcript')}
               onNext={() => setActive('copy')}
+            />
+          ) : active === 'copy' ? (
+            <CopyPanel
+              settings={settings}
+              media={media}
+              transcript={currentTranscript}
+              clips={currentClips}
+              brief={brief}
+              copy={currentCopy}
+              onCopyChange={setCopy}
+              onOpenSettings={openSettings}
+              onGoClips={() => setActive('clips')}
+              onNext={() => setActive('brand')}
             />
           ) : (
             <Placeholder step={step} />
