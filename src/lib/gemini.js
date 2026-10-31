@@ -37,6 +37,54 @@ export function pickDefaultModel(models) {
   return flash[0] || models[0] || DEFAULT_MODEL
 }
 
+// The Gemini content part that points at the podcast: an uploaded file or a public YouTube URL.
+export function mediaPart(media) {
+  if (!media?.gemini?.uri) throw new Error('Add a podcast in step 1 first')
+  return {
+    file_data: {
+      file_uri: media.gemini.uri,
+      ...(media.gemini.mimeType ? { mime_type: media.gemini.mimeType } : {}),
+    },
+  }
+}
+
+// Extracts the 11-character video ID from any common YouTube URL shape.
+export function parseYouTubeId(input) {
+  const text = String(input || '').trim()
+  if (/^[\w-]{11}$/.test(text)) return text
+  let url
+  try {
+    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`)
+  } catch {
+    return null
+  }
+  const host = url.hostname.replace(/^(www\.|m\.|music\.)/, '')
+  let id = null
+  if (host === 'youtu.be') id = url.pathname.slice(1).split('/')[0]
+  else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+    id = url.searchParams.get('v')
+    if (!id) {
+      const m = url.pathname.match(/^\/(shorts|embed|live|v)\/([\w-]{11})/)
+      id = m ? m[2] : null
+    }
+  }
+  return id && /^[\w-]{11}$/.test(id) ? id : null
+}
+
+// Best-effort title lookup for a YouTube video. Returns null if it can't be fetched.
+export async function fetchYouTubeTitle(id) {
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${id}`)}`,
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.title || null
+  } catch {
+    return null
+  }
+}
+
 // Calls generateContent and returns parsed JSON that matches `schema`.
 // `parts` is an array of Gemini content parts, e.g. [{ text }] or [{ file_data }, { text }].
 export async function generateJSON({ apiKey, model, system, parts, schema, temperature = 0.4, signal }) {
