@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import BrandPanel from './components/BrandPanel.jsx'
+import CalendarPanel from './components/CalendarPanel.jsx'
 import ClipsPanel from './components/ClipsPanel.jsx'
 import CopyPanel from './components/CopyPanel.jsx'
 import Settings from './components/Settings.jsx'
@@ -55,6 +56,7 @@ export default function App() {
   const [transcript, setTranscript] = useState(() => load('transcript', null))
   const [clips, setClips] = useState(() => load('clips', null))
   const [copy, setCopy] = useState(() => load('copy', null))
+  const [schedule, setSchedule] = useState(() => load('schedule', null))
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => save('settings', settings), [settings])
@@ -64,6 +66,7 @@ export default function App() {
   useEffect(() => save('transcript', transcript), [transcript])
   useEffect(() => save('clips', clips), [clips])
   useEffect(() => save('copy', copy), [copy])
+  useEffect(() => save('schedule', schedule), [schedule])
 
   // Release a local file's preview URL once it is replaced. Lives here (not in a panel)
   // so the preview keeps working while you move between steps.
@@ -79,6 +82,7 @@ export default function App() {
   const currentTranscript = transcript && transcript.mediaUri === mediaUri ? transcript : null
   const currentClips = clips && clips.mediaUri === mediaUri && currentTranscript ? clips : null
   const currentCopy = copy && copy.mediaUri === mediaUri && currentClips ? copy : null
+  const currentSchedule = schedule && schedule.mediaUri === mediaUri && currentCopy ? schedule : null
 
   const done = {
     upload: Boolean(media?.gemini),
@@ -86,6 +90,7 @@ export default function App() {
     clips: Boolean(currentClips?.items.some((c) => c.keep)),
     copy: Boolean(currentCopy),
     brand: Boolean(settings.brandRules?.length),
+    calendar: Boolean(currentSchedule?.posts?.length),
   }
 
   const step = STEPS.find((s) => s.id === active)
@@ -191,6 +196,16 @@ export default function App() {
               onOpenSettings={openSettings}
               onGoCopy={() => setActive('copy')}
               onNext={() => setActive('calendar')}
+            />
+          ) : active === 'calendar' ? (
+            <CalendarPanel
+              media={media}
+              clips={currentClips}
+              copy={currentCopy}
+              schedule={currentSchedule}
+              onScheduleChange={setSchedule}
+              onGoCopy={() => setActive('copy')}
+              onNext={() => setActive('performance')}
             />
           ) : (
             <Placeholder step={step} />
