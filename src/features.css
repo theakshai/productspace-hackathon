@@ -6,3 +6,20 @@
 .rule-suggest { margin-top: 8px; }
 .rule-suggest li { padding: 4px 0; gap: 12px; }
 .rule-suggest .btn { padding: 4px 10px; }
+.brand-panel { display: grid; gap: 20px; }
+.brand-section { border: 1px solid var(--border); border-radius: 12px; padding: 16px; background: var(--surface-2); display: grid; gap: 8px; }
+.rule-list { list-style: decimal; margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.rule-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; }
+.rule-text { font-weight: 500; }
+.rule-input { flex: 1; width: 100%; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.tag.source { margin: 0; white-space: nowrap; color: var(--muted); background: var(--surface); }
+.add-rule { margin-top: 6px; }
+.add-rule .btn { margin-top: 0; }
+.learned { display: grid; gap: 8px; margin-top: 4px; }
+.learned-item { display: flex; justify-content: space-between; gap: 12px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.learned-item p { margin: 2px 0 0; }
+.learned-item .btn { margin-top: 0; }
+.voice-log { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.voice-log .tag { margin: 0 6px 0 0; }
+.link.inline { padding: 0; font-size: inherit; }
+@media (max-width: 700px) { .rule-row { grid-template-columns: 1fr; } }

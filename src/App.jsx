@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BrandPanel from './components/BrandPanel.jsx'
 import ClipsPanel from './components/ClipsPanel.jsx'
 import CopyPanel from './components/CopyPanel.jsx'
 import Settings from './components/Settings.jsx'
@@ -84,16 +85,22 @@ export default function App() {
     transcript: Boolean(currentTranscript),
     clips: Boolean(currentClips?.items.some((c) => c.keep)),
     copy: Boolean(currentCopy),
+    brand: Boolean(settings.brandRules?.length),
   }
 
   const step = STEPS.find((s) => s.id === active)
   const openSettings = () => setShowSettings(true)
-  const addBrandRules = (rules) =>
+  // source: 'voice' (voice edit feedback), 'edits' (learned from typed edits), 'said' (taught by voice), 'typed'
+  const addBrandRules = (rules, source = 'voice') =>
     setSettings((s) => {
       const existing = s.brandRules || []
       const lower = new Set(existing.map((r) => r.toLowerCase()))
-      return { ...s, brandRules: [...existing, ...rules.filter((r) => !lower.has(r.toLowerCase()))] }
+      const fresh = rules.filter((r) => !lower.has(r.toLowerCase()))
+      const ruleSources = { ...(s.ruleSources || {}) }
+      for (const r of fresh) ruleSources[r] = source
+      return { ...s, brandRules: [...existing, ...fresh], ruleSources }
     })
+  const setBrandRules = (brandRules, ruleSources) => setSettings((s) => ({ ...s, brandRules, ruleSources }))
 
   return (
     <div className="app">
@@ -174,6 +181,16 @@ export default function App() {
               onOpenSettings={openSettings}
               onGoClips={() => setActive('clips')}
               onNext={() => setActive('brand')}
+            />
+          ) : active === 'brand' ? (
+            <BrandPanel
+              settings={settings}
+              copy={currentCopy}
+              onSetRules={setBrandRules}
+              onAddRules={addBrandRules}
+              onOpenSettings={openSettings}
+              onGoCopy={() => setActive('copy')}
+              onNext={() => setActive('calendar')}
             />
           ) : (
             <Placeholder step={step} />
