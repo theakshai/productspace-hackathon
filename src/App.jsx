@@ -3,9 +3,11 @@ import BrandPanel from './components/BrandPanel.jsx'
 import CalendarPanel from './components/CalendarPanel.jsx'
 import ClipsPanel from './components/ClipsPanel.jsx'
 import CopyPanel from './components/CopyPanel.jsx'
+import PerformancePanel from './components/PerformancePanel.jsx'
 import Settings from './components/Settings.jsx'
 import TranscriptPanel from './components/TranscriptPanel.jsx'
 import UploadPanel from './components/UploadPanel.jsx'
+import { DEMO_BRAND_RULES, buildDemo } from './lib/demo.js'
 import { load, save } from './lib/storage.js'
 
 // Each step maps to a feature in features.md. Steps unlock as features ship.
@@ -57,6 +59,7 @@ export default function App() {
   const [clips, setClips] = useState(() => load('clips', null))
   const [copy, setCopy] = useState(() => load('copy', null))
   const [schedule, setSchedule] = useState(() => load('schedule', null))
+  const [performance, setPerformance] = useState(() => load('performance', null))
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => save('settings', settings), [settings])
@@ -67,6 +70,7 @@ export default function App() {
   useEffect(() => save('clips', clips), [clips])
   useEffect(() => save('copy', copy), [copy])
   useEffect(() => save('schedule', schedule), [schedule])
+  useEffect(() => save('performance', performance), [performance])
 
   // Release a local file's preview URL once it is replaced. Lives here (not in a panel)
   // so the preview keeps working while you move between steps.
@@ -83,6 +87,7 @@ export default function App() {
   const currentClips = clips && clips.mediaUri === mediaUri && currentTranscript ? clips : null
   const currentCopy = copy && copy.mediaUri === mediaUri && currentClips ? copy : null
   const currentSchedule = schedule && schedule.mediaUri === mediaUri && currentCopy ? schedule : null
+  const currentPerformance = performance && performance.mediaUri === mediaUri ? performance : null
 
   const done = {
     upload: Boolean(media?.gemini),
@@ -91,6 +96,7 @@ export default function App() {
     copy: Boolean(currentCopy),
     brand: Boolean(settings.brandRules?.length),
     calendar: Boolean(currentSchedule?.posts?.length),
+    performance: Boolean(settings.learnings?.length),
   }
 
   const step = STEPS.find((s) => s.id === active)
@@ -105,6 +111,25 @@ export default function App() {
       for (const r of fresh) ruleSources[r] = source
       return { ...s, brandRules: [...existing, ...fresh], ruleSources }
     })
+  // F10: one click loads a fully processed podcast with sample performance numbers. Keeps the API key.
+  function loadDemo() {
+    const d = buildDemo()
+    setMedia(d.media)
+    setSpeech(d.speech)
+    setBrief(d.brief)
+    setTranscript(d.transcript)
+    setClips(d.clips)
+    setCopy(d.copy)
+    setSchedule(d.schedule)
+    setPerformance(d.performance)
+    setSettings((s) => ({
+      ...s,
+      brandRules: DEMO_BRAND_RULES.map(([r]) => r),
+      ruleSources: Object.fromEntries(DEMO_BRAND_RULES),
+      learnings: [],
+    }))
+    setActive('clips')
+  }
   const setBrandRules = (brandRules, ruleSources) => setSettings((s) => ({ ...s, brandRules, ruleSources }))
 
   return (
@@ -119,6 +144,9 @@ export default function App() {
           <span className="voice-pill" title="All input in ClipCraft is designed for Wispr Flow dictation">
             🎙 Built for Wispr Flow
           </span>
+          <button className="btn small demo-btn" onClick={loadDemo} title="Load a processed podcast with sample results. No API key needed.">
+            ▶ Load demo
+          </button>
           <button className="btn small" onClick={openSettings}>
             ⚙ Settings{settings.apiKey ? '' : ' · add key'}
           </button>
@@ -199,6 +227,7 @@ export default function App() {
             />
           ) : active === 'calendar' ? (
             <CalendarPanel
+              settings={settings}
               media={media}
               clips={currentClips}
               copy={currentCopy}
@@ -206,6 +235,19 @@ export default function App() {
               onScheduleChange={setSchedule}
               onGoCopy={() => setActive('copy')}
               onNext={() => setActive('performance')}
+            />
+          ) : active === 'performance' ? (
+            <PerformancePanel
+              settings={settings}
+              media={media}
+              clips={currentClips}
+              schedule={currentSchedule}
+              performance={currentPerformance}
+              onPerformanceChange={setPerformance}
+              onSaveLearnings={(learnings) => setSettings((s) => ({ ...s, learnings }))}
+              onOpenSettings={openSettings}
+              onGoCalendar={() => setActive('calendar')}
+              onGoClips={() => setActive('clips')}
             />
           ) : (
             <Placeholder step={step} />

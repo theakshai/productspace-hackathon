@@ -47,3 +47,28 @@
 .caption-preview { white-space: pre-wrap; font: inherit; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin: 0; max-height: 240px; overflow: auto; }
 .calendar-panel .row.top .btn { white-space: nowrap; }
 .post-detail .grid-2.tight { max-width: 420px; }
+.row.wrap { flex-wrap: wrap; gap: 6px 16px; }
+.demo-btn { border-color: var(--accent); color: var(--accent); }
+.perf-panel { display: grid; gap: 18px; }
+.perf-voice { border-top: 0; margin-top: 0; padding-top: 0; }
+.perf-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+.perf-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.perf-table th { text-align: left; font-size: 12px; color: var(--muted); text-transform: capitalize; padding: 10px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.perf-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.perf-table tr:last-child td { border-bottom: 0; }
+.perf-table tr.future { opacity: 0.6; }
+.perf-table input { width: 84px; font: inherit; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; }
+.perf-table .eng { font-weight: 600; white-space: nowrap; }
+.perf-table .post-dot { display: inline-block; vertical-align: middle; }
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.finding { display: grid; gap: 4px; border: 1px solid var(--border); border-left: 3px solid var(--muted); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.finding.up, .finding.star { border-left-color: #3fb950; }
+.finding.down { border-left-color: #f85149; }
+.finding.info { border-left-color: #58a6ff; }
+.rerank { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.rerank li { display: flex; gap: 10px; align-items: baseline; }
+.move { font-size: 12px; font-weight: 700; min-width: 26px; color: var(--muted); }
+.move.up { color: #3fb950; }
+.move.down { color: #f85149; }
+.learnings ul { margin: 6px 0 0; padding-left: 18px; }
+.learnings { font-size: 14px; }
