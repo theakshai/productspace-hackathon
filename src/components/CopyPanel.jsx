@@ -379,6 +379,18 @@ export default function CopyPanel({ settings, media, transcript, clips, brief, c
           {error}
         </p>
       )}
+      {copy && !busy && kept.every((c) => !copy.byClip[c.id]) && (
+        <div className="callout" data-testid="stale-copy">
+          <strong>Your clips changed since these captions were written.</strong> Click <strong>Rewrite all</strong> to write
+          captions for the current clips.
+        </div>
+      )}
+      {!copy && !busy && (
+        <p className="muted small">
+          Click <strong>Write captions</strong>. Each clip then gets tabs per platform, editable fields, and a 🎙 box to change the
+          copy by voice.
+        </p>
+      )}
 
       <div className="clips-layout">
         <div className="clips-player">
