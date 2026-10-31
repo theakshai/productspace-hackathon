@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react'
+import ClipsPanel from './components/ClipsPanel.jsx'
 import Settings from './components/Settings.jsx'
-import BriefPanel from './components/BriefPanel.jsx'
 import TranscriptPanel from './components/TranscriptPanel.jsx'
 import UploadPanel from './components/UploadPanel.jsx'
 import { load, save } from './lib/storage.js'
 
 // Each step maps to a feature in features.md. Steps unlock as features ship.
 const STEPS = [
-  { id: 'upload', label: 'Upload', feature: 'F1', blurb: 'Drop a 10–20 minute podcast, video or audio.' },
-  { id: 'brief', label: 'Voice brief', feature: 'F2', blurb: 'Tell ClipCraft what you want, by voice with Wispr Flow.' },
+  { id: 'upload', label: 'Upload', feature: 'F1', blurb: 'A YouTube link or a 10–20 minute podcast file.' },
   { id: 'transcript', label: 'Transcript', feature: 'F3', blurb: 'Timestamped, speaker-labelled transcript.' },
-  { id: 'clips', label: 'Clips', feature: 'F4', blurb: 'The best moments, each with a reason.' },
+  { id: 'clips', label: 'Clips', feature: 'F4', blurb: 'Say what you want; get the best moments, each with a reason.' },
   { id: 'copy', label: 'Copy', feature: 'F5–F6', blurb: 'Captions and posts for every platform. Edit by voice.' },
   { id: 'brand', label: 'Brand voice', feature: 'F7', blurb: 'Rules learned from your edits.' },
   { id: 'calendar', label: 'Calendar', feature: 'F8', blurb: 'When and where each clip goes out.' },
@@ -52,6 +51,7 @@ export default function App() {
   const [speech, setSpeech] = useState(() => load('speech', ''))
   const [brief, setBrief] = useState(() => load('brief', null))
   const [transcript, setTranscript] = useState(() => load('transcript', null))
+  const [clips, setClips] = useState(() => load('clips', null))
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => save('settings', settings), [settings])
@@ -59,6 +59,7 @@ export default function App() {
   useEffect(() => save('speech', speech), [speech])
   useEffect(() => save('brief', brief), [brief])
   useEffect(() => save('transcript', transcript), [transcript])
+  useEffect(() => save('clips', clips), [clips])
 
   // Release a local file's preview URL once it is replaced. Lives here (not in a panel)
   // so the preview keeps working while you move between steps.
@@ -69,13 +70,19 @@ export default function App() {
     }
   }, [media?.previewUrl])
 
-  // A transcript belongs to one podcast: drop it when the podcast changes.
+  // Transcript and clips belong to one podcast: ignore them when the podcast changes.
   const mediaUri = media?.gemini?.uri || null
   const currentTranscript = transcript && transcript.mediaUri === mediaUri ? transcript : null
+  const currentClips = clips && clips.mediaUri === mediaUri && currentTranscript ? clips : null
 
-  const done = { upload: Boolean(media?.gemini), brief: Boolean(brief), transcript: Boolean(currentTranscript) }
+  const done = {
+    upload: Boolean(media?.gemini),
+    transcript: Boolean(currentTranscript),
+    clips: Boolean(currentClips?.items.some((c) => c.keep)),
+  }
 
   const step = STEPS.find((s) => s.id === active)
+  const openSettings = () => setShowSettings(true)
 
   return (
     <div className="app">
@@ -89,7 +96,7 @@ export default function App() {
           <span className="voice-pill" title="All input in ClipCraft is designed for Wispr Flow dictation">
             🎙 Built for Wispr Flow
           </span>
-          <button className="btn small" onClick={() => setShowSettings(true)}>
+          <button className="btn small" onClick={openSettings}>
             ⚙ Settings{settings.apiKey ? '' : ' · add key'}
           </button>
         </div>
@@ -115,17 +122,7 @@ export default function App() {
               settings={settings}
               media={media}
               onMediaChange={setMedia}
-              onOpenSettings={() => setShowSettings(true)}
-              onNext={() => setActive('brief')}
-            />
-          ) : active === 'brief' ? (
-            <BriefPanel
-              settings={settings}
-              speech={speech}
-              onSpeechChange={setSpeech}
-              brief={brief}
-              onBriefChange={setBrief}
-              onOpenSettings={() => setShowSettings(true)}
+              onOpenSettings={openSettings}
               onNext={() => setActive('transcript')}
             />
           ) : active === 'transcript' ? (
@@ -134,9 +131,24 @@ export default function App() {
               media={media}
               transcript={currentTranscript}
               onTranscriptChange={setTranscript}
-              onOpenSettings={() => setShowSettings(true)}
+              onOpenSettings={openSettings}
               onGoUpload={() => setActive('upload')}
               onNext={() => setActive('clips')}
+            />
+          ) : active === 'clips' ? (
+            <ClipsPanel
+              settings={settings}
+              media={media}
+              transcript={currentTranscript}
+              speech={speech}
+              onSpeechChange={setSpeech}
+              brief={brief}
+              onBriefChange={setBrief}
+              clips={currentClips}
+              onClipsChange={setClips}
+              onOpenSettings={openSettings}
+              onGoTranscript={() => setActive('transcript')}
+              onNext={() => setActive('copy')}
             />
           ) : (
             <Placeholder step={step} />
@@ -144,9 +156,7 @@ export default function App() {
         </main>
       </div>
 
-      {showSettings && (
-        <Settings settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />
-      )}
+      {showSettings && <Settings settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
     </div>
   )
 }
