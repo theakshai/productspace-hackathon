@@ -32,7 +32,7 @@ function PostCard({ post, clip, selected, onSelect }) {
   )
 }
 
-export default function CalendarPanel({ media, clips, copy, schedule, onScheduleChange, onGoCopy, onNext }) {
+export default function CalendarPanel({ settings = {}, media, clips, copy, schedule, onScheduleChange, onGoCopy, onNext }) {
   const [selected, setSelected] = useState(null)
   const [dragOver, setDragOver] = useState(null)
   const todayIso = toISODate(new Date())
@@ -44,14 +44,16 @@ export default function CalendarPanel({ media, clips, copy, schedule, onSchedule
 
   // Show whole weeks from this Monday until the last scheduled post (at least two weeks, at most six).
   const lastDate = posts.reduce((max, p) => (p.date > max ? p.date : max), todayIso)
+  const firstDate = posts.reduce((min, p) => (p.date < min ? p.date : min), todayIso)
   const days = useMemo(() => {
-    const first = calendarDays(new Date(), 1)[0]
+    const from = fromISODate(firstDate)
+    const first = calendarDays(from, 1)[0]
     const span = Math.round((fromISODate(lastDate) - first) / 86400000) + 1
-    return calendarDays(new Date(), Math.min(6, Math.max(2, Math.ceil(span / 7))))
-  }, [lastDate])
+    return calendarDays(from, Math.min(6, Math.max(2, Math.ceil(span / 7))))
+  }, [firstDate, lastDate])
 
   function plan() {
-    onScheduleChange({ mediaUri: media.gemini.uri, posts: autoSchedule({ clips: kept, platforms }), createdAt: new Date().toISOString() })
+    onScheduleChange({ mediaUri: media.gemini.uri, posts: autoSchedule({ clips: kept, platforms, days: settings.scheduleDays || 14 }), createdAt: new Date().toISOString() })
     setSelected(null)
   }
 
@@ -111,7 +113,7 @@ export default function CalendarPanel({ media, clips, copy, schedule, onSchedule
         <div className="empty">
           <p className="muted">
             Click <strong>Auto-schedule</strong>. ClipCraft spreads {kept.length} clips × {platforms.length} platforms over the next
-            two weeks, strongest clips first, each platform at its usual best time.
+            {settings.scheduleDays === 7 ? 'week' : 'two weeks'}, strongest clips first, each platform at its usual best time.
           </p>
         </div>
       ) : (

@@ -102,7 +102,7 @@ export default function TranscriptPanel({ settings, media, transcript, onTranscr
           <h2>{transcript?.title || media.fileName}</h2>
           {transcript && (
             <p className="muted small">
-              {transcript.segments.length} lines · {transcript.speakers.map((s) => s.name).join(', ')}
+              {transcript.segments.length} lines · {transcript.speakers.map((s) => s.name).join(', ')}{transcript.excerpt ? " · demo excerpt: only the lines inside the clips" : ""}
               {transcript.durationSeconds ? ` · ${formatTimestamp(transcript.durationSeconds)}` : ''}
             </p>
           )}

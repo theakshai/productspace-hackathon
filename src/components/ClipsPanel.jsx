@@ -85,6 +85,8 @@ export default function ClipsPanel({
         setStage('brief')
         useBrief = await structureBrief({ apiKey: settings.apiKey, model: settings.model, rawSpeech: text, signal: controller.signal })
       }
+      // F11: fall back to the default platforms from Settings when the brief names none.
+      if (!useBrief.platforms?.length && settings.defaultPlatforms?.length) useBrief = { ...useBrief, platforms: settings.defaultPlatforms }
       onBriefChange(useBrief)
       setStage('clips')
       const items = await selectClips({

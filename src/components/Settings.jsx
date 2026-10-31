@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PLATFORMS } from '../lib/brief.js'
 import { listModels, pickDefaultModel } from '../lib/gemini.js'
 
 export default function Settings({ settings, onSave, onClose }) {
@@ -6,6 +7,8 @@ export default function Settings({ settings, onSave, onClose }) {
   const [model, setModel] = useState(settings.model || '')
   const [models, setModels] = useState([])
   const [status, setStatus] = useState(null)
+  const [platforms, setPlatforms] = useState(settings.defaultPlatforms?.length ? settings.defaultPlatforms : PLATFORMS.map((p) => p.id))
+  const [scheduleDays, setScheduleDays] = useState(settings.scheduleDays || 14)
 
   async function testKey() {
     setStatus({ kind: 'busy', text: 'Checking key…' })
@@ -21,7 +24,7 @@ export default function Settings({ settings, onSave, onClose }) {
   }
 
   function save() {
-    onSave({ ...settings, apiKey: apiKey.trim(), model: model || settings.model })
+    onSave({ ...settings, apiKey: apiKey.trim(), model: model || settings.model, defaultPlatforms: platforms, scheduleDays: Number(scheduleDays) })
     onClose()
   }
 
@@ -61,6 +64,30 @@ export default function Settings({ settings, onSave, onClose }) {
 
         {status && <p className={`status ${status.kind}`}>{status.text}</p>}
 
+        <div className="field">
+          <span>Default platforms (used when your brief doesn't name any)</span>
+          <div className="row wrap">
+            {PLATFORMS.map(({ id: p, label }) => (
+              <label key={p} className="row small check">
+                <input
+                  type="checkbox"
+                  checked={platforms.includes(p)}
+                  onChange={(e) => setPlatforms((x) => (e.target.checked ? [...x, p] : x.length > 1 ? x.filter((y) => y !== p) : x))}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <label className="field">
+          <span>Posting cadence</span>
+          <select value={scheduleDays} onChange={(e) => setScheduleDays(e.target.value)} aria-label="Posting cadence">
+            <option value={7}>Spread posts over 1 week</option>
+            <option value={14}>Spread posts over 2 weeks</option>
+          </select>
+        </label>
+
         <div className="row end">
           <button className="btn" onClick={onClose}>
             Cancel
@@ -68,7 +95,7 @@ export default function Settings({ settings, onSave, onClose }) {
           <button className="btn" onClick={testKey} disabled={!apiKey.trim()}>
             Test key
           </button>
-          <button className="btn primary" onClick={save} disabled={!apiKey.trim()}>
+          <button className="btn primary" onClick={save}>
             Save
           </button>
         </div>
