@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { EXAMPLE_SPEECH, PLATFORMS, structureBrief } from '../lib/brief.js'
+import DictationBox from './DictationBox.jsx'
 
 function ListEditor({ label, values, onChange, placeholder }) {
   return (
@@ -32,10 +33,13 @@ export default function BriefPanel({ settings, speech, onSpeechChange, brief, on
       onOpenSettings()
       return
     }
+    // Read straight from the box in case dictated text hasn't reached state yet.
+    const text = textRef.current?.read() || speech
+    if (text !== speech) onSpeechChange(text)
     setBusy(true)
     setError(null)
     try {
-      const result = await structureBrief({ apiKey: settings.apiKey, model: settings.model, rawSpeech: speech })
+      const result = await structureBrief({ apiKey: settings.apiKey, model: settings.model, rawSpeech: text })
       onBriefChange(result)
     } catch (e) {
       setError(e.message)
@@ -62,11 +66,11 @@ export default function BriefPanel({ settings, speech, onSpeechChange, brief, on
       </div>
 
       <div className="dictation">
-        <textarea
+        <DictationBox
           ref={textRef}
           className="dictation-box"
           value={speech}
-          onChange={(e) => onSpeechChange(e.target.value)}
+          onChange={onSpeechChange}
           placeholder="🎙 Hold your Wispr Flow key and speak your brief…"
           rows={6}
           data-testid="speech"
