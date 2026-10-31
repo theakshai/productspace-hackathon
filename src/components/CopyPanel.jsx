@@ -364,7 +364,7 @@ export default function CopyPanel({ settings, media, transcript, clips, brief, c
             ⬇ All subtitles
           </button>
           <button className={`btn ${copy ? '' : 'primary'}`} onClick={run} disabled={busy}>
-            {busy ? 'Writing…' : copy ? 'Rewrite all' : 'Write captions'}
+            {busy ? 'Writing… (30–60s)' : copy ? 'Rewrite all' : 'Write captions'}
           </button>
         </div>
       </div>
