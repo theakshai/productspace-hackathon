@@ -120,3 +120,50 @@ export async function writeCopy({ apiKey, model, transcript, clips, brief, brand
   }
   return { platforms, byClip }
 }
+
+const REWRITE_SYSTEM = `You edit social media copy for a podcast creator based on their spoken feedback.
+
+The feedback is raw dictated speech: it may contain filler words, rambling and self-corrections ("make it longer, no wait, shorter"). The LATER statement wins.
+
+Rules:
+- Apply the feedback precisely. Change only what the feedback asks for; keep everything else.
+- Stay true to what is said in the clip; never invent facts or quotes.
+- Respect the platform's format and length limit.
+- Follow every existing brand voice rule unless the feedback explicitly overrides it.
+- "changes": one short sentence describing what you changed.
+- "rules": only if the feedback expresses a LASTING style preference that should apply to all future posts (e.g. "I never use emojis", "always end with a question", "less corporate"). Phrase each as a short imperative rule ("Never use emojis."). For one-off fixes about this specific post ("mention the 2 minute mark", "fix the typo"), return an empty list. Do not repeat rules that already exist.`
+
+function rewriteSchema(platform) {
+  const fields = FIELD_SCHEMA[platform]
+  return {
+    type: 'OBJECT',
+    properties: {
+      fields: {
+        type: 'OBJECT',
+        properties: Object.fromEntries(Object.entries(fields).map(([k, d]) => [k, { type: 'STRING', description: d }])),
+        required: Object.keys(fields),
+      },
+      changes: { type: 'STRING' },
+      rules: { type: 'ARRAY', items: { type: 'STRING' } },
+    },
+    required: ['fields', 'changes', 'rules'],
+  }
+}
+
+export async function rewriteCopy({ apiKey, model, platform, current, feedback, transcript, clip, brief, brandRules = [], signal }) {
+  const b = brief || DEFAULT_BRIEF
+  const limits = PLATFORM_FIELDS[platform].map((f) => `${f.label}: max ${f.limit}${f.unit ? ` ${f.unit}` : ' characters'}`).join('; ')
+  const parts = [
+    { text: `PLATFORM: ${platform} (${limits})\nAudience: ${b.audience}\nTone: ${b.tone.join(', ') || 'conversational'}` },
+    { text: brandRules.length ? `EXISTING BRAND VOICE RULES\n- ${brandRules.join('\n- ')}` : 'EXISTING BRAND VOICE RULES\nNone.' },
+    { text: `CLIP TRANSCRIPT\n${clipText(transcript, clip)}` },
+    { text: `CURRENT COPY\n${JSON.stringify(current, null, 2)}` },
+    { text: `CREATOR'S SPOKEN FEEDBACK\n"""${feedback}"""` },
+  ]
+  const raw = await generateJSON({ apiKey, model, system: REWRITE_SYSTEM, schema: rewriteSchema(platform), temperature: 0.6, signal, parts })
+  const fields = {}
+  for (const f of PLATFORM_FIELDS[platform]) fields[f.key] = String(raw.fields?.[f.key] ?? current[f.key] ?? '').trim()
+  const known = new Set(brandRules.map((r) => r.toLowerCase().trim()))
+  const rules = (raw.rules || []).map((r) => String(r).trim()).filter((r) => r && !known.has(r.toLowerCase()))
+  return { fields, changes: String(raw.changes || 'Rewritten.'), rules }
+}
