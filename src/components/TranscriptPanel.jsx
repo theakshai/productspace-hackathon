@@ -84,7 +84,7 @@ export default function TranscriptPanel({ settings, media, transcript, onTranscr
   if (!media?.gemini) {
     return (
       <div className="placeholder">
-        <span className="tag">Step 3 · Transcript</span>
+        <span className="tag">Step 2 · Transcript</span>
         <h2>Add a podcast first</h2>
         <p className="muted">Paste a YouTube link or upload a file in step 1.</p>
         <button className="btn primary" onClick={onGoUpload}>
@@ -98,7 +98,7 @@ export default function TranscriptPanel({ settings, media, transcript, onTranscr
     <div className="transcript-panel">
       <div className="row between top">
         <div>
-          <span className="tag">Step 3 · Transcript</span>
+          <span className="tag">Step 2 · Transcript</span>
           <h2>{transcript?.title || media.fileName}</h2>
           {transcript && (
             <p className="muted small">

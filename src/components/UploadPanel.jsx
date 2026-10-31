@@ -266,7 +266,7 @@ export default function UploadPanel({ settings, media, onMediaChange, onOpenSett
               {isYouTube ? '✓ Linked. Gemini will watch it straight from YouTube.' : '✓ Sent to Gemini and ready to analyse.'}
             </p>
             <button className="btn primary" onClick={onNext}>
-              Next: voice brief →
+              Next: transcript →
             </button>
           </>
         ) : busy ? (
